@@ -14,14 +14,15 @@ module.exports = async (req, res) => {
   const P = process.env.APP_PW || '';
   const S = process.env.JWT_SECRET || '';
 
-  if (!P || !S || !pw || pw.length > 128) return res.status(401).json({ e: 1 });
+  if (!P || !S) return res.status(500).json({ e: 'server_config' });
+  if (!pw || pw.length > 128) return res.status(400).json({ e: 'invalid_input' });
 
   const ok = crypto.timingSafeEqual(
     Buffer.from(pw.padEnd(128)),
     Buffer.from(P.padEnd(128))
   ) && pw === P;
 
-  if (!ok) return res.status(401).json({ e: 1 });
+  if (!ok) return res.status(401).json({ e: 'invalid_password' });
 
   const iat = Math.floor(Date.now() / 1000);
   const exp = iat + 21600;

@@ -627,10 +627,18 @@ async function tryLogin(){
   const pw=document.getElementById('lpw').value;
   try{
     const res=await fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pw})});
-    if(res.ok){
-      const {t}=await res.json();
-      RL.reset();Store.load();Ses.start(t);Store.log('login','Ingelogd');
+    const data=await res.json().catch(()=>({}));
+    if(res.ok&&data.t){
+      RL.reset();Store.load();Ses.start(data.t);Store.log('login','Ingelogd');
       showApp();rWeeks();render();rAudit();toast('Welkom','ok');
+    } else if(data.e==='server_config'||res.status>=500){
+      errEl.textContent='Serverconfig ontbreekt: APP_PW/JWT_SECRET.';
+      errEl.classList.add('on');
+      hintEl.textContent='Controleer Vercel Environment Variables en redeploy.';
+    } else if(data.e==='invalid_input'||res.status===400){
+      errEl.textContent='Voer een geldig wachtwoord in.';
+      errEl.classList.add('on');
+      hintEl.textContent=' ';
     } else {
       const rem=RL.hit();
       errEl.textContent=RL.locked()?`Account vergrendeld voor ${CFG.LOCK/60000} minuten.`:'Onjuist wachtwoord.';
